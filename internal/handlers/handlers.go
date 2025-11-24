@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
+	"net/url"
 	"url-shortener/internal/models"
 	"url-shortener/internal/shortener"
 )
@@ -42,6 +44,13 @@ func (h *Handler) HandleShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Content-Type header check
+	if r.Header.Get("Content-Type") != "application/json" {
+		log.Printf("Unsupported Content-Type: %s", r.Header.Get("Content-Type"))
+		http.Error(w, "Unsupported Content-Type, expected application/json", http.StatusUnsupportedMediaType)
+		return
+	}
+
 	var req models.ShortenRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -50,9 +59,18 @@ func (h *Handler) HandleShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Field level validation
+	req.LongURL = strings.TrimSpace(req.LongURL)
 	if req.LongURL == "" {
 		log.Printf("Long URL is required")
 		http.Error(w, "Long URL is required", http.StatusBadRequest)
+		return
+	}
+
+	u, err := url.ParseRequestURI(req.LongURL)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		log.Printf("Invalid Long URL: %s", req.LongURL)
+		http.Error(w, "Invalid Long URL", http.StatusBadRequest)
 		return
 	}
 

@@ -129,3 +129,8 @@ make clean
 ```bash
 make docker-compose-up
 ```
+
+### Limitations/Improvements
+1. **Current code doesn't have support for HTTPs request**
+2. **It supports only incoming request content-type application/json**
+3. **Used in-mermory datastructure for storing data**
